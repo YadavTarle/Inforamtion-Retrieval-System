@@ -1,0 +1,46 @@
+import time
+import streamlit as st
+from src.helper import *
+
+
+def user_input(user_question):
+    response = st.session_state.conversation({"question": user_question})
+    st.session_state.chatHistory = response['chat_history']
+    for i,message in enumerate(st.session_state.chatHistory):
+        if i % 2 == 0:
+            st.write("User: ", message.content)
+        else:
+            st.write("Reply: ",message.content)
+
+def main():
+    st.set_page_config("Information Retrieval System")
+    st.header("Information Retrieval System 📄")
+
+    user_question = st.text_input("Ast a question about the PDF documents you uploaded:")
+
+    if "conversation" not in st.session_state:
+        st.session_state.conversation = None
+    if "chatHistory" not in st.session_state:
+        st.session_state.chatHistory = None
+    if user_question:
+        user_input(user_question)
+    
+    
+    with st.sidebar:
+        st.title("Menu:")
+        pdf_docs = st.file_uploader("Upload your PDF files and click on the Submit and Process button",accept_multiple_files=True, type=["pdf"])
+
+        if st.button("Submit and Process"):
+            with st.spinner("Processing..."):
+                raw_text = get_pdf_text(pdf_docs)
+                text_chunks = get_pdf_text(raw_text)
+                vector_store = get_vector_store(text_chunks)
+                st.session_state.conversation = get_conversational_chain(vector_store)
+                
+
+                st.success("Done!")
+                
+
+
+if __name__ == "__main__":
+    main()
